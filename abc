@@ -1,0 +1,37 @@
+'use strict';
+
+const ProductService = require('../services/product.service');
+const { SuccessResponse } = require('../core/success.response');
+const asyncHandler = require('../utils/asyncHandler'); // Middleware xử lý async lỗi
+
+class ProductController {
+    createProduct = asyncHandler(async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Product created successfully!',
+            metadata: await ProductService.createProduct(req.body),
+        }).send(res);
+    });
+
+    readProduct = asyncHandler(async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Product retrieved successfully!',
+            metadata: await ProductService.readProduct(req.params.name),
+        }).send(res);
+    });
+
+    updateProduct = asyncHandler(async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Product updated successfully!',
+            metadata: await ProductService.update(req.params.name, req.body),
+        }).send(res);
+    });
+
+    deleteProduct = asyncHandler(async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Product deleted successfully!',
+            metadata: await ProductService.deleteProductByName(req.params.name),
+        }).send(res);
+    });
+}
+
+module.exports = new ProductController();
