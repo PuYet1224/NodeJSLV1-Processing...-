@@ -20,55 +20,45 @@ const RoleShop = {
 }
 
 class AccessService {
+
+    static handleRefreshTokenV2 = async ({ keyStore, user, refreshToken }) => { 
+        const { userId, email } = user;
     
-    /*
-        check this token used?
-    */
-    static handleRefreshToken = async ( refreshToken ) =>{
-
-        //check xem token nay da duoc su dung chua
-        const foundToken = await KeyTokenService.findByRefreshTokenUsed( refreshToken )
-        // neu co
-        if(foundToken){
-            // decode xem ng truy cap vao token la ai 
-            const { userId, email } = await verifyJWT( refreshToken, foundToken.privateKey)
-            console.log({userId, email})
-            //xoa tat ca token trong keyStore
-            await KeyTokenService.deleteKeyById(userId)
-            throw new ForbiddenError('Something Wrong Happening Here!! Please login again!')
+        // Đảm bảo refreshTokensUsed là một mảng
+        if (!Array.isArray(keyStore.refreshTokensUsed)) {
+            keyStore.refreshTokensUsed = []; // Khởi tạo thành một mảng rỗng nếu undefined
         }
-
-        // neu chua
-        const holderToken = await KeyTokenService.findByRefreshToken( refreshToken )
-        // neu tim khong duoc
-        if(!holderToken) throw new AuthFailureError('Shop Not Registered 1!')
-        // neu tim duoc (verify token)
-        const { userId, email } = await verifyJWT( refreshToken, holderToken.privateKey)
-        console.log('[2]--', {userId, email})
-
-        // check userId
-        const foundShop = await findByEmail( {email} )
-
-        // neu tim khong duoc
-        if(!foundShop) throw new AuthFailureError('Shop Not Registered 2!')
-            
-        // neu tim duoc (create 1 cap token moi)
-        const tokens = await createTokenPair({userId, email}, holderToken.publicKey , holderToken.privateKey)
-
-        //update token
-        await holderToken.updateOne({
+     
+        // Kiểm tra nếu refreshToken đã được sử dụng
+        if (keyStore.refreshTokensUsed.includes(refreshToken)) {
+            await KeyTokenService.deleteKeyById(userId);
+            throw new ForbiddenError('Something Wrong Happening Here!! Please login again!');
+        }
+    
+        if (keyStore.refreshToken !== refreshToken) throw new AuthFailureError('Shop Not Registered!');
+    
+        const foundShop = await findByEmail({ email });
+        if (!foundShop) throw new AuthFailureError('Shop Not Registered 2!');
+        
+        // Tạo mới cặp token
+        const tokens = await createTokenPair({ userId, email }, keyStore.publicKey, keyStore.privateKey);
+    
+        // Cập nhật refreshToken
+        await keyStore.updateOne({
             $set: {
                 refreshToken: tokens.refreshToken
             },
             $addToSet: {
-                refreshTokenUsed: refreshToken // da duoc su dung de lay token moi 
+                refreshTokensUsed: refreshToken // Đã được sử dụng để lấy token mới
             }
-        })
+        });
+    
         return {
-            user: { userId, email },
+            user,
             tokens
-        }
+        };
     }
+    
 
     static logout = async ( keyStore ) =>{
         const delKey = await KeyTokenService.removeKeyById(keyStore._id)
@@ -97,7 +87,7 @@ class AccessService {
             const publicKey = crypto.randomBytes(64).toString('hex')
         // Step 4         
             const { _id: userId } = foundShop
-            const tokens = await createTokenPair({userId, email}, publicKey , privateKey)
+            const tokens = await createTokenPair({userId, email }, publicKey , privateKey)
 
             await KeyTokenService.createKeyToken({
                 refreshToken: tokens.refreshToken,  

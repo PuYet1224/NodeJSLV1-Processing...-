@@ -31,7 +31,7 @@ class KeyTokenService {
     }
 
     static findByUserId = async ( userId ) =>{
-        return await keytokenModel.findOne({ user: Types.ObjectId.createFromHexString(userId) }).lean()
+        return await keytokenModel.findOne({ user: Types.ObjectId.createFromHexString(userId) })
     }
     static removeKeyById = async (id) => {
         return await keytokenModel.deleteOne(id)
@@ -46,7 +46,7 @@ class KeyTokenService {
     }
 
     static deleteKeyById =  async ( userId ) => {
-        return await keytokenModel.deleteOne({ user: userId })
+        return await keytokenModel.deleteOne({ user: Types.ObjectId.createFromHexString(userId) })
     }
 }
 

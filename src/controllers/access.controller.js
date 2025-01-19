@@ -2,14 +2,23 @@
 
 const AccessService = require("../services/access.service")
 
-const {OK, CREATED, SuccessResponse} = require('../core/success.response')
+const {CREATED, SuccessResponse} = require('../core/success.response')
 
 class AccessController {
     handleRefreshToken = async (req, res, next) =>{
+        // new SuccessResponse({
+        //     message: 'Get Token Success!',
+        //     metadata: await AccessService.handleRefreshToken( req.body.refreshToken )
+        // }).send(res)
+        //ver 2 fixed, no need accessToken
         new SuccessResponse({
-            message: 'Get Token Success!',
-            metadata: await AccessService.handleRefreshToken( req.body.refreshToken )
-        }).send(res)
+                message: 'Get Token Success!',
+                metadata: await AccessService.handleRefreshTokenV2( {
+                    refreshToken: req.refreshToken,
+                    user: req.user,
+                    keyStore: req.keyStore
+                })
+            }).send(res)
     }
      
     login = async (req, res, next) =>{

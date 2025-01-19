@@ -22,9 +22,11 @@ require('./dbs/init.mongodb')
 //init routes
 const accessRouter = require('./routes/access')
 const shopRouter = require('./routes/shop')
-
+const productRouter = require('./routes/product')
 app.use('/v1/api', shopRouter)
 app.use('/v1/api', accessRouter)
+app.use('/v1/api/product', productRouter)
+
 
 //handle error
 
@@ -39,6 +41,7 @@ app.use((error, req, res, next) =>{
     return res.status(status).json({
         status: 'error',
         code: status,
+        // stack: error.stack,
         message: error.message || 'Internal Server Error'
     })
 })
